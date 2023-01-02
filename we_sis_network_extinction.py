@@ -56,57 +56,41 @@ def AddingMatrix(d):
 
 
 def GillespieMC(n, weights , tau, k, N, Alpha, Beta):
-    G = nx.random_regular_graph(k,N)
-    Adj = nx.adjacency_matrix(G,nodelist=range(0,N)) # Later this step should be removed appears only for debugging
-    # Adj = nx.to_numpy_matrix(G) # Later this step should be removed appears only for debugging
-    # Adj =nx.to_numpy_array(G)
-    steps_c = np.size(n,1)
+    G = nx.random_regular_graph(k,N) # Creates a random graphs with k number of neighbors
+    steps_c = np.size(n,1) # Number of simulations
     t = np.zeros(steps_c)
-    # ng = np.zeros([steps_c, sims])
     ng = np.zeros(np.shape(n))
     wg = np.zeros(steps_c)
     it = 10**6
     keep = it 
     j = 0 
     death = 0 
-    # add_n = AddingMatrix(D)
 
     while 1 : 
         if keep >= it - np.size(n,0):
             r2 = np.random.rand(it)
             r1 = -np.log(np.random.rand(it))
             keep = 0 
-        # a_vec = np.hstack([n*(n-1)*A, n+ n*(n-1)*(n-2)*B , np.repeat(mu*n, D-1, axis=1)])
-        # a_vec = np.hstack([Beta * np.matmul(np.matmul(Adj,n), (np.ones(n.size)-n)),Alpha*n])
-        # a_vec = np.hstack([Beta * Adj*n*(np.ones(n.shape)-n),Alpha*n])
-        # a_vec = np.vstack([Beta * Adj*n*(np.ones(n.shape)-n),Alpha*n])
-        a_vec = Beta * Adj*n*(np.ones(n.shape)-n)+Alpha*n
-        # a = a_vec.sum(1)
+        a_vec = Beta * nx.adjacency_matrix(G,nodelist=range(0,N))*n*(np.ones(n.shape)-n)+Alpha*n # Rates matrix each, columns different networks rows different nodes
         a = a_vec.sum(0)
-        # index = (np.transpose(a_vec.cumsum(1))/a < r2[keep:keep+steps_c]).sum(0)
-        # index = (np.transpose(a_vec.cumsum(0))/a < r2[keep:keep+steps_c]).sum(0)
-        index = ((a_vec.cumsum(0))/a < r2[keep:keep+steps_c]).sum(0)
+        index = ((a_vec.cumsum(0))/a < r2[keep:keep+steps_c]).sum(0) # First index instance rate for a rate that's above the random number
         t = t + 1/a*r1[keep:keep+steps_c]
-        # n = n + add_n[index]
-        for i in range(index.size): n[index[i], i] = 1 - n[index[i], i]
-        # n = n + (1-2*n[index])
-        # n = n + np.transpose(add_n[:, index])
-        # keep = keep +  np.size(n, 0)
+        for i in range(index.size): n[index[i], i] = 1 - n[index[i], i] # Change the infect\heal nodes from index array
         keep = keep +  np.size(n, 1)
+        # Finds out if a network reached extinction and if so remove it from the dynamical process
         if np.any(n.sum(0)<=0):
             con = n.sum(0)<=0
             y = con.sum()
             death = death + weights[con].sum()
             t = t[~con]
             n = n[~con,:]
-
             steps_c = np.size(n,1)
             weights = weights[~con]
             wg = wg[:-y]
-            # ng = ng[:-y, :]
             ng = ng[:, :-y]
             if steps_c == 0:
-               break 
+               break
+        # Finds out if a network has advanced the prerequired time steps (tau) and if stop running its dynamics
         if np.any(t >= tau):
             con =  t >= tau         
             y = con.sum() 
@@ -116,7 +100,6 @@ def GillespieMC(n, weights , tau, k, N, Alpha, Beta):
             n = n[:,~con]
             weights = weights[~con]
             steps_c = np.size(n,1)
-            
             j = j + y 
             if steps_c == 0:
                break
@@ -153,56 +136,38 @@ def resample(n, w, steps):
 
 
 if __name__ == '__main__':
-#    N , M, dn, dm, mu, steps, it =  int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]),int(sys.argv[4]), float(sys.argv[5]),  int(sys.argv[6])
+    # Parameters for the network to work
     start_time = time.time()
-    N = 40
-    sims = 10
-    k = 5
-    x = 0.2
-    lam = 1.6
-    Num_inf = int(x*N)
-    # steps = 1000
+    N = 40 # number of nodes
+    sims = 10 # Number of simulations at each step
+    k = 5 # Average number of neighbors for each node
+    x = 0.2 # intial infection percentage
+    lam = 1.6 # The reproduction number
+    Num_inf = int(x*N) # Number of initially infected nodes
     it = 500
     jump = 10
-    Alpha = 1.0
-    Beta_avg = Alpha * lam / k
-    epsilon = 0.0
-    Beta = Beta_avg / (1 + epsilon ** 2)
-
-# N = np.array([500, 500, 500])
-    # dn = np.array([0.42, 0.38, 0.39])
-    # mu = 4
-    # print('mu = ' ,mu)
-    # print('N = ' ,N)
-    # print('dn = ' ,dn)
-    # finding all permutations, which we treat as path to extinction
-    # D = dn.size
+    Alpha = 1.0 # Recovery rate
+    Beta_avg = Alpha * lam / k # Infection rate for each node
+    epsilon = 0.0 # The normalized std (second moment divided by the first) of the network
+    Beta = Beta_avg / (1 + epsilon ** 2) # This is so networks with different std will have the reproduction number
 
     # F0 = N*(1-dn)
     # Fpoint = root(RateEquation,  F0, args = (N, dn, mu))
     # FP = Fpoint.x # this is the unstable fixed point, over this point we switch.
 
-    # tau = 0.1* (1 - dn[0])/(2*dn[0])
-    # tau = 0.1 * (1 - dn[0]) / (2 * dn[0])
     tau = 1/(Num_inf*Alpha+N*Beta*k)
 
-    # n = np.ones([steps, D], dtype = 'int64')* N*(1+dn)
+    # creates a series of sims networks with Num_inf infections
     n = np.zeros((N, sims))
     for i in range(sims):
         for j in rand.sample(range(0, N - 1), Num_inf):
             n[j,i] = 1.0
 
-    # n = np.zeros((N, sims))
-
-    # t = np.zeros(steps)
-    # weights = np.ones(steps)/steps
     t = np.zeros(sims)
     weights = np.ones(sims)/sims
-    # n,  weights, death = GillespieMC(n, weights ,  N, dn, mu, tau*10, D)
     n, weights, death = GillespieMC(n, weights, tau * 10, k, N, Alpha, Beta)
 
     Death = np.array([death])
-    # Nlimits = np.vstack([10*N, FP, np.zeros(FP.size)])
     Nlimits = np.array([N+1, N*(1-1/lam), 0])
 
     n_min = n.min(0)
@@ -210,10 +175,8 @@ if __name__ == '__main__':
     WW = np.zeros(it)
 
     for j in range(it):
-        # n,  weights, death = GillespieMC(n, weights ,  N, dn, mu, tau, D)
         n,  weights, death = GillespieMC(n, weights, tau * 10, k, N, Alpha, Beta)
         Death = np.append(Death, death)
-        # if np.logical_and(np.any(n.min(0) < n_min - jump), np.all(n.min(0) > FP)):
         if np.logical_and(np.any(n.min(0) < n_min - jump), np.all(n.min(0) > FP)):
             n_min = n.min(0)
             Nlimits =np.insert(Nlimits, -2, n_min, axis = 0)
