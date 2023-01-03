@@ -21,9 +21,7 @@ Created on Thu Sep  6 09:03:17 2018
 
 
 import numpy as np 
-#import matplotlib.pyplot as plt
-from scipy.optimize import root
-#from scipy import linalg 
+#from scipy import linalg
 from scipy.io import savemat
 import sys 
 from sympy.utilities.iterables import multiset_permutations
@@ -31,43 +29,19 @@ import time
 import networkx as nx
 import random as rand
 
-def RateEquation(n, N, dn, mu):
-    f = np.zeros(n.size)
-    for i in range(N.size):
-        f[i] =  -(1+D*mu)*n[i] - n[i]**3/((1 - dn[i]**2)*N[i]**2) + (2*n[i]**2)/((1 - dn[i]**2)*N[i]) +mu*sum(n)
-    return f
-   
-def AddingMatrix(d):
-    a = np.zeros(d-1)
-    a[0] = 1
-    b = np.zeros([(d-1),(d-1)])
-    i = 0
-    for p in multiset_permutations(a):
-        b[:, i] = p 
-        i = i+1
-    add = np.zeros([d, d+d+d*(d-1)])
-    add[0:d, 0:d] = np.diag(np.ones(d))
-    add[0:d, d:2*d] = np.diag(-np.ones(d))
-    for i in range(d):
-        add[i, (2*d+(d-1)*i):(2*d+(d-1)*(i+1))] = -np.ones(d-1)
-        add[np.arange(d)!=i, (2*d+(d-1)*i):(2*d+(d-1)*(i+1)) ] = b
-    
-    return add 
 
-
-def GillespieMC(n, weights , tau, k, N, Alpha, Beta):
-    G = nx.random_regular_graph(k,N) # Creates a random graphs with k number of neighbors
+def GillespieMC(n, weights , tau, k, N, Alpha, Beta,G):
     steps_c = np.size(n,1) # Number of simulations
     t = np.zeros(steps_c)
     ng = np.zeros(np.shape(n))
     wg = np.zeros(steps_c)
     it = 10**6
-    keep = it 
+    keep = it
     j = 0 
     death = 0 
 
     while 1 : 
-        if keep >= it - np.size(n,0):
+        if keep >= it - np.size(n,1):
             r2 = np.random.rand(it)
             r1 = -np.log(np.random.rand(it))
             keep = 0 
@@ -83,7 +57,7 @@ def GillespieMC(n, weights , tau, k, N, Alpha, Beta):
             y = con.sum()
             death = death + weights[con].sum()
             t = t[~con]
-            n = n[~con,:]
+            n = n[:,~con]
             steps_c = np.size(n,1)
             weights = weights[~con]
             wg = wg[:-y]
@@ -138,24 +112,28 @@ def resample(n, w, steps):
 if __name__ == '__main__':
     # Parameters for the network to work
     start_time = time.time()
-    N = 40 # number of nodes
-    sims = 10 # Number of simulations at each step
-    k = 5 # Average number of neighbors for each node
-    x = 0.2 # intial infection percentage
+    N = 100 # number of nodes
+    sims = 100 # Number of simulations at each step
+    k = 200 # Average number of neighbors for each node
+    x = 0.3 # intial infection percentage
     lam = 1.6 # The reproduction number
     Num_inf = int(x*N) # Number of initially infected nodes
     it = 500
-    jump = 10
+    jump = 1
     Alpha = 1.0 # Recovery rate
     Beta_avg = Alpha * lam / k # Infection rate for each node
     epsilon = 0.0 # The normalized std (second moment divided by the first) of the network
     Beta = Beta_avg / (1 + epsilon ** 2) # This is so networks with different std will have the reproduction number
+    # G = nx.random_regular_graph(k,N) # Creates a random graphs with k number of neighbors
+    G = nx.complete_graph(N) # Creates a random graphs with k number of neighbors
 
     # F0 = N*(1-dn)
     # Fpoint = root(RateEquation,  F0, args = (N, dn, mu))
     # FP = Fpoint.x # this is the unstable fixed point, over this point we switch.
 
-    tau = 1/(Num_inf*Alpha+N*Beta*k)
+    # tau = 1/(Num_inf*Alpha+N*Beta*k)
+    tau = 1.0
+
 
     # creates a series of sims networks with Num_inf infections
     n = np.zeros((N, sims))
@@ -165,30 +143,32 @@ if __name__ == '__main__':
 
     t = np.zeros(sims)
     weights = np.ones(sims)/sims
-    n, weights, death = GillespieMC(n, weights, tau * 10, k, N, Alpha, Beta)
+    # n, weights, death = GillespieMC(n, weights, tau , k, N, Alpha, Beta,G)
 
-    Death = np.array([death])
-    Nlimits = np.array([N+1, N*(1-1/lam), 0])
+    Death = np.array([])
+    Nlimits = np.array([N+1, 0])
 
-    n_min = n.min(0)
-    Nlimits = np.insert(Nlimits, -2, n_min, axis = 0)
+    # n_min = n.min(0)
+    # n_min = np.min(np.sum(n,axis=0))
+    n_min = N
+    # Nlimits = np.insert(Nlimits, -1, n_min, axis = 0)
     WW = np.zeros(it)
 
     for j in range(it):
-        n,  weights, death = GillespieMC(n, weights, tau * 10, k, N, Alpha, Beta)
+        n,  weights, death = GillespieMC(n, weights, tau, k, N, Alpha, Beta,G)
         Death = np.append(Death, death)
-        if np.logical_and(np.any(n.min(0) < n_min - jump), np.all(n.min(0) > FP)):
-            n_min = n.min(0)
-            Nlimits =np.insert(Nlimits, -2, n_min, axis = 0)
+        if np.min(np.sum(n,axis=0)) < n_min - jump and Nlimits[-2]>jump:
+            n_min = np.min(np.sum(n,axis=0))
+            Nlimits =np.insert(Nlimits, -1, n_min, axis = 0)
 
-        Bins = (np.size(Nlimits, axis =0) -1)
-        A = np.zeros([Bins, np.size(n,0)], dtype='bool')
+        Bins = np.size(Nlimits) -1
+        A = np.zeros([Bins, np.size(n,1)], dtype='bool')
         for q in range(Bins):
-            A[q, :] = np.logical_and(np.sum(A[:q, :], 0) == 0, np.all(Nlimits[q+1, :]<=n, axis=1))
+            A[q, :] = np.logical_and(Nlimits[q+1] < np.sum(n,axis=0), Nlimits[q] >= np.sum(n,axis=0)) #np.logical_and(np.sum(A[:q, :], 0) == 0, np.all(Nlimits[q+1, :]<=n, axis=1))
         WW[j] = weights[A[-1, :]].sum()
 
         # nf, wf = resample(n[A[0,:], :], weights[A[0, :]], steps)
-        nf, wf = resample(n[A[0,:], :], weights[A[0, :]], sims)
+        nf, wf = resample(n[:,A[0,:]], weights[A[0, :]], sims)
         for q in range(1, Bins):
             if A[q,:].sum() != 0 :
                 # n1, w1 = resample(n[A[q,:], :], weights[A[q, :]], steps)
