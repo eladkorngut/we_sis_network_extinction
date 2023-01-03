@@ -28,6 +28,7 @@ from sympy.utilities.iterables import multiset_permutations
 import time
 import networkx as nx
 import random as rand
+import matplotlib.pyplot as plt
 
 
 def GillespieMC(n, weights , tau, k, N, Alpha, Beta,G):
@@ -80,6 +81,7 @@ def GillespieMC(n, weights , tau, k, N, Alpha, Beta,G):
     return ng, wg, death
 
 def resample(n, w, steps):
+    n = n.T
     Wtot = np.sum(w)
     SortedIdxW = np.argsort(w)
     W = w[SortedIdxW]
@@ -106,7 +108,7 @@ def resample(n, w, steps):
             Wsum = 0
     W = np.hstack([Wtemp, W[~conSmall]])
     N = np.vstack([N[Itemp, :], N[~conSmall, :]])
-    return N,  W
+    return N.T,  W
 
 
 if __name__ == '__main__':
@@ -114,12 +116,12 @@ if __name__ == '__main__':
     start_time = time.time()
     N = 100 # number of nodes
     sims = 100 # Number of simulations at each step
-    k = 200 # Average number of neighbors for each node
+    k = 100 # Average number of neighbors for each node
     x = 0.3 # intial infection percentage
     lam = 1.6 # The reproduction number
     Num_inf = int(x*N) # Number of initially infected nodes
-    it = 500
-    jump = 1
+    it = 50
+    jump = 10
     Alpha = 1.0 # Recovery rate
     Beta_avg = Alpha * lam / k # Infection rate for each node
     epsilon = 0.0 # The normalized std (second moment divided by the first) of the network
@@ -152,7 +154,6 @@ if __name__ == '__main__':
     # n_min = np.min(np.sum(n,axis=0))
     n_min = N
     # Nlimits = np.insert(Nlimits, -1, n_min, axis = 0)
-    WW = np.zeros(it)
 
     for j in range(it):
         n,  weights, death = GillespieMC(n, weights, tau, k, N, Alpha, Beta,G)
@@ -165,38 +166,42 @@ if __name__ == '__main__':
         A = np.zeros([Bins, np.size(n,1)], dtype='bool')
         for q in range(Bins):
             A[q, :] = np.logical_and(Nlimits[q+1] < np.sum(n,axis=0), Nlimits[q] >= np.sum(n,axis=0)) #np.logical_and(np.sum(A[:q, :], 0) == 0, np.all(Nlimits[q+1, :]<=n, axis=1))
-        WW[j] = weights[A[-1, :]].sum()
 
         # nf, wf = resample(n[A[0,:], :], weights[A[0, :]], steps)
         nf, wf = resample(n[:,A[0,:]], weights[A[0, :]], sims)
         for q in range(1, Bins):
             if A[q,:].sum() != 0 :
                 # n1, w1 = resample(n[A[q,:], :], weights[A[q, :]], steps)
-                n1, w1 = resample(n[A[q,:], :], weights[A[q, :]], sims)
-                nf = np.vstack([nf, n1])
+                n1, w1 = resample(n[:, A[q,:]], weights[A[q, :]], sims)
+                nf = np.hstack([nf, n1])
                 wf = np.hstack([wf, w1])
         n = nf
         weights = wf
         print(j)
 
-    TAU = tau/np.mean((np.diff(WW[99:])+Death[101:]).reshape(int((it-100)/10), 10), axis = 1).mean()
+    TAU = tau/np.mean((Death[5:]))  #.reshape(int((it-100)/10), 10), axis = 1).mean()
     print('Check if probability is conserved: Weights + Death = ' ,weights.sum() + Death.sum())
+    print('Sick {}, Healthy {}'.format(weights.sum(), Death.sum()))
     print('the time of switch is ', TAU)
+    print(Nlimits)
+    print(Death)
+    fig, ax = plt.subplots()
+    ax.plot(np.arange(it), Death)
+    plt.show()
+    # B = {}
+    # B['flux'] = Death
+    # B['weights'] = weights
+    # B['n'] = n
+    # B['tau'] = tau
+    # B['dn'] = dn
+    # B['N'] = N
+    # B['mu'] = mu
+    # B['TrajPerBin'] = sims
 
-    B = {}
-    B['flux'] = Death
-    B['weights'] = weights
-    B['n'] = n
-    B['tau'] = tau
-    B['dn'] = dn
-    B['N'] = N
-    B['mu'] = mu
-    B['TrajPerBin'] = sims
 
-
-    dire = 'N_'+ np.str(N)  + '_dn_' + np.str(dn) + '_mu_'+ np.str(mu)
-    savemat(dire,B)
-    print("--- %s seconds ---" % (time.time() - start_time))
+    # dire = 'N_'+ np.str(N)  + '_dn_' + np.str(dn) + '_mu_'+ np.str(mu)
+    # savemat(dire,B)
+    # print("--- %s seconds ---" % (time.time() - start_time))
 
 
     
