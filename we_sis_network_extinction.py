@@ -50,7 +50,9 @@ def GillespieMC(n, weights , tau, k, N, Alpha, Beta,G):
         a = a_vec.sum(0)
         index = ((a_vec.cumsum(0))/a < r2[keep:keep+steps_c]).sum(0) # First index instance rate for a rate that's above the random number
         t = t + 1/a*r1[keep:keep+steps_c]
-        for i in range(index.size): n[index[i], i] = 1 - n[index[i], i] # Change the infect\heal nodes from index array
+        index_arrange = np.arange(index.size)
+        n[index[index_arrange],index_arrange] = 1 - n[index[index_arrange],index_arrange]
+        # for i in range(index.size): n[index[i], i] = 1 - n[index[i], i] # Change the infect\heal nodes from index array
         keep = keep +  np.size(n, 1)
         # Finds out if a network reached extinction and if so remove it from the dynamical process
         if np.any(n.sum(0)<=0):
@@ -111,28 +113,12 @@ def resample(n, w, steps):
     return N.T,  W
 
 
-if __name__ == '__main__':
-    # Parameters for the network to work
-    start_time = time.time()
-    N = 100 # number of nodes
-    sims = 100 # Number of simulations at each step
-    k = 100 # Average number of neighbors for each node
-    x = 0.3 # intial infection percentage
-    lam = 1.6 # The reproduction number
+
+def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau):
     Num_inf = int(x*N) # Number of initially infected nodes
-    it = 50
-    jump = 10
-    Alpha = 1.0 # Recovery rate
-    Beta_avg = Alpha * lam / k # Infection rate for each node
-    epsilon = 0.0 # The normalized std (second moment divided by the first) of the network
-    Beta = Beta_avg / (1 + epsilon ** 2) # This is so networks with different std will have the reproduction number
-    # G = nx.random_regular_graph(k,N) # Creates a random graphs with k number of neighbors
+    # Parameters for the network to work
     G = nx.complete_graph(N) # Creates a random graphs with k number of neighbors
-
-    # F0 = N*(1-dn)
-    # Fpoint = root(RateEquation,  F0, args = (N, dn, mu))
-    # FP = Fpoint.x # this is the unstable fixed point, over this point we switch.
-
+    relaxation_time  = 10
     # tau = 1/(Num_inf*Alpha+N*Beta*k)
     tau = 1.0
 
@@ -148,18 +134,19 @@ if __name__ == '__main__':
     # n, weights, death = GillespieMC(n, weights, tau , k, N, Alpha, Beta,G)
 
     Death = np.array([])
-    Nlimits = np.array([N+1, 0])
+    Nlimits = np.array([N+1, N*(1-1/lam),0])
 
     # n_min = n.min(0)
     # n_min = np.min(np.sum(n,axis=0))
-    n_min = N
+    n_min = N*(1-1/lam)
     # Nlimits = np.insert(Nlimits, -1, n_min, axis = 0)
 
     for j in range(it):
         n,  weights, death = GillespieMC(n, weights, tau, k, N, Alpha, Beta,G)
         Death = np.append(Death, death)
         if np.min(np.sum(n,axis=0)) < n_min - jump and Nlimits[-2]>jump:
-            n_min = np.min(np.sum(n,axis=0))
+            # n_min = np.min(np.sum(n,axis=0))
+            n_min = np.quantile(np.sum(n,axis=0), 0.02)
             Nlimits =np.insert(Nlimits, -1, n_min, axis = 0)
 
         Bins = np.size(Nlimits) -1
@@ -179,15 +166,27 @@ if __name__ == '__main__':
         weights = wf
         print(j)
 
-    TAU = tau/np.mean((Death[5:]))  #.reshape(int((it-100)/10), 10), axis = 1).mean()
+    TAU = tau/np.mean((Death[relaxation_time:]))  #.reshape(int((it-100)/10), 10), axis = 1).mean()
+
+    theory_well_mixed_mte = (1/Alpha)*np.sqrt(2*np.pi/N)*(lam/(lam-1)**2)*np.exp(N*(np.log(lam)+1/lam-1))
+
     print('Check if probability is conserved: Weights + Death = ' ,weights.sum() + Death.sum())
     print('Sick {}, Healthy {}'.format(weights.sum(), Death.sum()))
     print('the time of switch is ', TAU)
+    print('Theory and numeric ratio',TAU/theory_well_mixed_mte)
     print(Nlimits)
     print(Death)
-    fig, ax = plt.subplots()
-    ax.plot(np.arange(it), Death)
-    plt.show()
+    # fig, ax = plt.subplots()
+    # ax.semilogy(np.arange(it), Death)
+    # plt.xlabel('it')
+    # plt.ylabel('Deaths')
+    # plt.title('N={}, jump={}, R0={},tau={}, Sim/theory={}'.format(N,jump,lam,np.round(tau,3),TAU/theory_well_mixed_mte))
+    # fig.savefig('Death_v_it.png',dpi=200)
+    # plt.show()
+    np.save('tau_' + str(network_number) + '.npy',TAU)
+    np.save('Deaths_' + str(network_number) + '.npy',Death)
+    np.save('Nlimits_'+ str(network_number) + '.npy',Nlimits)
+    np.save('weights_'+ str(network_number) + '.npy',weights)
     # B = {}
     # B['flux'] = Death
     # B['weights'] = weights
@@ -204,4 +203,21 @@ if __name__ == '__main__':
     # print("--- %s seconds ---" % (time.time() - start_time))
 
 
-    
+if __name__ == '__main__':
+    N = 100 # number of nodes
+    sims = 100 # Number of simulations at each step
+    # k = 100 # Average number of neighbors for each node
+    k = N # Average number of neighbors for each node
+
+    x = 0.2 # intial infection percentage
+    lam = 1.6 # The reproduction number
+    it = 100
+    jump = 10
+    Alpha = 1.0 # Recovery rate
+    Beta_avg = Alpha * lam / k # Infection rate for each node
+    epsilon = 0.0 # The normalized std (second moment divided by the first) of the network
+    Beta = Beta_avg / (1 + epsilon ** 2) # This is so networks with different std will have the reproduction number
+    # G = nx.random_regular_graph(k,N) # Creates a random graphs with k number of neighbors
+    network_num = 0
+    start_time = time.time()
+    run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_num)
