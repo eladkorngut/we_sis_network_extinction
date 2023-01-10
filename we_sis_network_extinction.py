@@ -144,9 +144,11 @@ def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau):
     for j in range(it):
         n,  weights, death = GillespieMC(n, weights, tau, k, N, Alpha, Beta,G)
         Death = np.append(Death, death)
-        if np.min(np.sum(n,axis=0)) < n_min - jump and Nlimits[-2]>jump:
+        # n_min_new = np.quantile(np.sum(n, axis=0), 0.05)
+        n_min_new = np.partition(np.sum(n, axis=0), 5)[5]
+        if n_min_new < n_min - jump and Nlimits[-2]>jump:
             # n_min = np.min(np.sum(n,axis=0))
-            n_min = np.quantile(np.sum(n,axis=0), 0.02)
+            n_min = n_min_new
             Nlimits =np.insert(Nlimits, -1, n_min, axis = 0)
 
         Bins = np.size(Nlimits) -1
@@ -163,6 +165,7 @@ def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau):
                 nf = np.hstack([nf, n1])
                 wf = np.hstack([wf, w1])
         n = nf
+        total_infected_for_sim = np.sum(n,axis=0)
         weights = wf
         print(j)
 
@@ -187,6 +190,8 @@ def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau):
     np.save('Deaths_' + str(network_number) + '.npy',Death)
     np.save('Nlimits_'+ str(network_number) + '.npy',Nlimits)
     np.save('weights_'+ str(network_number) + '.npy',weights)
+    np.save('total_infected_for_sim_' + str(network_number) + '.npy', total_infected_for_sim)
+
     # B = {}
     # B['flux'] = Death
     # B['weights'] = weights
@@ -210,7 +215,7 @@ if __name__ == '__main__':
     k = N # Average number of neighbors for each node
 
     x = 0.2 # intial infection percentage
-    lam = 1.6 # The reproduction number
+    lam = 1.5 # The reproduction number
     it = 100
     jump = 10
     Alpha = 1.0 # Recovery rate
@@ -219,5 +224,6 @@ if __name__ == '__main__':
     Beta = Beta_avg / (1 + epsilon ** 2) # This is so networks with different std will have the reproduction number
     # G = nx.random_regular_graph(k,N) # Creates a random graphs with k number of neighbors
     network_num = 0
+    tau = 1.0
     start_time = time.time()
-    run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_num)
+    run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_num,tau)
