@@ -221,6 +221,6 @@ def act_as_main():
 if __name__ == '__main__':
     if sys.argv[1] == 'bd':
     # Run the extinction program for bimodal directed networks
-        run_sim(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), float(sys.argv[5]),
-        float(sys.argv[6]), int(sys.argv[7]), int(sys.argv[8]),float(sys.argv[9]),float(sys.argv[10]),int(sys.argv[11]),
+        run_sim(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]),
+        float(sys.argv[6]), float(sys.argv[7]), int(sys.argv[8]),float(sys.argv[9]),float(sys.argv[10]),int(sys.argv[11]),
                 float(sys.argv[12]),sys.argv[13],float(sys.argv[14]))

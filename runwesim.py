@@ -16,7 +16,7 @@ def act_as_main(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in, d
         nx.write_gpickle(G, infile)
         we_sis_network_extinction.run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,i,tau,infile,Istar)
 
-def job_to_cluster(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in, d2_out, N,Beta,tau,Istar):
+def job_to_cluster(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in, d2_out, N,Beta,tau,Istar,it):
     # This function submit jobs to the cluster with the following program keys:
     # bd: creates a bimodal directed networks and find its mean time to extinction
     prog = 'bd'
@@ -30,8 +30,8 @@ def job_to_cluster(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in
         infile = 'GNull_{}.pickle'.format(i)
         nx.write_gpickle(G, infile)
         os.system(dir_path + '/slurm.serjob python3 ' + dir_path + '/we_sis_network_extinction.py ' + str(prog) + ' ' +
-        str(N) + ' ' + str(sims) + ' ' + str(k) + ' ' + str(x) + ' ' + str(lam) + ' ' + str(Num_inf) + ' ' + str(jump) + ' ' + str(Alpha) +
-        ' ' + str(Beta)+ ' ' + str(i)+ ' ' + str(tau)+ ' ' + str(infile)+ ' ' + str(Istar))
+        str(N) + ' ' + str(sims) + ' ' + str(it) + ' ' + str(k) + ' ' + str(x) + ' ' + str(lam) + ' ' + str(jump) + ' ' + str(Alpha) + ' ' + str(Beta) +
+        + ' ' + str(i) + ' ' + str(tau)+ ' ' + str(infile)+ ' ' + str(Istar))
 
 
 if __name__ == '__main__':
@@ -59,12 +59,12 @@ if __name__ == '__main__':
     foldername = 'wellmixed_N100_lam16_tau1_it100_jump5_quant5_sims1000_net10_eps0'
     d1_in, d1_out, d2_in, d2_out = int(k * (1 - eps_din)), int(k * (1 - eps_dout)), int(k * (1 + eps_din)), int(
         k * (1 + eps_dout))
-    y1star=(-2*eps_din*(1 + eps_dout*eps_din)+ lam*(-1 + eps_din)*(1 + (-1 + 2*eps_dout)*eps_din)+ np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(-1 +eps_dout)*(-1 +eps_din)*eps_din)
-    y2star=(lam + eps_din*(-2 + 2*lam +lam*eps_din+ 2*eps_dout*(lam +(-1 + lam)*eps_din)) -np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(1 +eps_dout)*eps_din*(1 + eps_din))
+    # y1star=(-2*eps_din*(1 + eps_dout*eps_din)+ lam*(-1 + eps_din)*(1 + (-1 + 2*eps_dout)*eps_din)+ np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(-1 +eps_dout)*(-1 +eps_din)*eps_din)
+    # y2star=(lam + eps_din*(-2 + 2*lam +lam*eps_din+ 2*eps_dout*(lam +(-1 + lam)*eps_din)) -np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(1 +eps_dout)*eps_din*(1 + eps_din))
     # Istar = (y1star +y2star)*N
     Istar = (1 - 1/lam) * N
 
 
     # What's the job to run either on the cluster or on the laptop
-    job_to_cluster(foldername, parameters, number_of_networks, d1_in, d1_out, d2_in, d2_out, N, Beta, tau, Istar)
+    job_to_cluster(foldername, parameters, number_of_networks, d1_in, d1_out, d2_in, d2_out, N, Beta, tau, Istar,it)
 
