@@ -4,7 +4,7 @@ import we_sis_network_extinction
 import rand_networks
 import networkx as nx
 
-def act_as_main(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in, d2_out, N,sims,it,k,x,lam,jump,Alpha,Beta,tau,Istar):
+def act_as_main(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in, d2_out, N,sims,it,k,x,lam,jump,Alpha,Beta,tau,Istar,new_trajcetory_bin):
     # This program will run the we_sis_network_extinction.py on the laptop\desktop
     os.mkdir(foldername)
     # dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -14,9 +14,9 @@ def act_as_main(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in, d
         G = rand_networks.random_bimodal_directed_graph(d1_in, d1_out, d2_in, d2_out, N)
         infile = 'GNull_{}.pickle'.format(i)
         nx.write_gpickle(G, infile)
-        we_sis_network_extinction.run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,i,tau,infile,Istar)
+        we_sis_network_extinction.run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,i,tau,infile,Istar,new_trajcetory_bin)
 
-def job_to_cluster(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in, d2_out, N,Beta,tau,Istar,it):
+def job_to_cluster(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in, d2_out, N,Beta,tau,Istar,it,new_trajcetory_bin):
     # This function submit jobs to the cluster with the following program keys:
     # bd: creates a bimodal directed networks and find its mean time to extinction
     prog = 'bd'
@@ -31,7 +31,7 @@ def job_to_cluster(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in
         nx.write_gpickle(G, infile)
         os.system(dir_path + '/slurm.serjob python3 ' + dir_path + '/we_sis_network_extinction.py ' + str(prog) + ' ' +
         str(N) + ' ' + str(sims) + ' ' + str(it) + ' ' + str(k) + ' ' + str(x) + ' ' + str(lam) + ' ' + str(jump) + ' ' + str(Alpha) + ' ' + str(Beta) +
-        ' ' + str(i) + ' ' + str(tau)+ ' ' + str(infile)+ ' ' + str(Istar))
+        ' ' + str(i) + ' ' + str(tau)+ ' ' + str(infile)+ ' ' + str(Istar)+ ' ' + str(new_trajcetory_bin))
 
 
 if __name__ == '__main__':
@@ -54,6 +54,8 @@ if __name__ == '__main__':
     relaxation_time  = 10
     # tau = 1/(Num_inf*Alpha+N*Beta*k)
     tau = 1.0
+    new_trajcetory_bin = 5
+
     parameters = np.array([N,sims,it,k,x,lam,jump,Num_inf,number_of_networks,tau,eps_din,eps_dout])
     graphname  = 'GNull'
     foldername = 'wellmixed_N100_lam16_tau1_it100_jump5_quant5_sims1000_net10_eps0'
@@ -66,4 +68,4 @@ if __name__ == '__main__':
 
 
     # What's the job to run either on the cluster or on the laptop
-    job_to_cluster(foldername, parameters, number_of_networks, d1_in, d1_out, d2_in, d2_out, N, Beta, tau, Istar,it)
+    job_to_cluster(foldername, parameters, number_of_networks, d1_in, d1_out, d2_in, d2_out, N, Beta, tau, Istar,it,new_trajcetory_bin)

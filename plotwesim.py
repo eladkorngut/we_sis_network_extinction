@@ -17,24 +17,24 @@ def plot_detahs_v_it(number_of_networks,it):
     plt.show()
 
 def plot_theory_well_mixed(lam_net,extinction_time_mean,extinction_time_std,N):
-    # lam_theory = np.linspace(np.min(lam_net),np.max(lam_net),100)
-    N_theory = np.linspace(np.min(N), np.max(N), 100)
-    theory_well_mixed_mte = (1/Alpha)*np.sqrt(2*np.pi/N_theory)*(lam_net/(lam_net-1)**2)*np.exp(N_theory*(np.log(lam_net)+1/lam_net-1))
-    # theory_well_mixed_mte = (1/Alpha)*np.sqrt(2*np.pi/N)*(lam_theory/(lam_theory-1)**2)*np.exp(N*(np.log(lam_theory)+1/lam_theory-1))
+    lam_theory = np.linspace(np.min(lam_net),np.max(lam_net),100)
+    # N_theory = np.linspace(np.min(N), np.max(N), 100)
+    # theory_well_mixed_mte = (1/Alpha)*np.sqrt(2*np.pi/N_theory)*(lam_net/(lam_net-1)**2)*np.exp(N_theory*(np.log(lam_net)+1/lam_net-1))
+    theory_well_mixed_mte = (1/Alpha)*np.sqrt(2*np.pi/N)*(lam_theory/(lam_theory-1)**2)*np.exp(N*(np.log(lam_theory)+1/lam_theory-1))
     fig_extinction, ax_extinction = plt.subplots()
     # plt.scatter(N_net,np.log(extinction_time_mean))
     # plt.plot(N_theory,np.log(theory_well_mixed_mte))
-    # plt.errorbar(lam_net,np.log(extinction_time_mean),yerr=np.log(extinction_time_std)/np.log(extinction_time_mean),fmt='o')
-    plt.errorbar(N,np.log(extinction_time_mean),yerr=np.log(extinction_time_std)/np.log(extinction_time_mean),fmt='o')
-    # plt.plot(lam_theory,np.log(theory_well_mixed_mte))
-    plt.plot(N_theory,np.log(theory_well_mixed_mte))
-    plt.xlabel('N')
-    # plt.xlabel('R')
+    plt.errorbar(lam_net,np.log(extinction_time_mean),yerr=np.log(extinction_time_std)/np.log(extinction_time_mean),fmt='o')
+    # plt.errorbar(N,np.log(extinction_time_mean),yerr=np.log(extinction_time_std)/np.log(extinction_time_mean),fmt='o')
+    plt.plot(lam_theory,np.log(theory_well_mixed_mte))
+    # plt.plot(N_theory,np.log(theory_well_mixed_mte))
+    # plt.xlabel('N')
+    plt.xlabel('R')
     plt.ylabel('ln(T)')
-    plt.title('N vs MTE R={}'.format(lam_net))
+    plt.title('MTE vs R N={}'.format(N))
     # plt.title('N vs ln(T) N={}'.format(int(N)))
     # fig_extinction.savefig('extinction_v_N.png',dpi=200)
-    fig_extinction.savefig('extinction_v_N.png',dpi=200)
+    fig_extinction.savefig('extinction_v_lam.png',dpi=200)
     plt.show()
 
 
@@ -57,7 +57,7 @@ def plot_theory_undirected_weak_hetro(lam,extinction_time_mean,extinction_time_s
 
 def plot_MTE(filename,directory_name,relaxation_time):
     Alpha =1.0
-    extinction_time_mean, extinction_time_std,N_net = np.empty(len(filename)),np.empty(len(filename)),np.empty(len(filename))
+    extinction_time_mean, extinction_time_std,N_net,lam_net = np.empty(len(filename)),np.empty(len(filename)),np.empty(len(filename)),np.empty(len(filename))
     # extinction_time_mean, extinction_time_std,lam_net = np.empty(len(filename)),np.empty(len(filename)),np.empty(len(filename))
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -75,11 +75,11 @@ def plot_MTE(filename,directory_name,relaxation_time):
             extinction_time[i] = tau/np.mean((Death[relaxation_time:]))
         extinction_time_mean[f] = np.mean(extinction_time)
         extinction_time_std[f] =  np.std(extinction_time)
-        # lam_net[f] = lam
-        N_net[f] = N
+        lam_net[f] = lam
+        # N_net[f] = N
     os.chdir(dir_path)
-    plot_theory_well_mixed(lam, extinction_time_mean, extinction_time_std, N_net)
-    # plot_theory_well_mixed(lam_net, extinction_time_mean, extinction_time_std, N)
+    # plot_theory_well_mixed(lam, extinction_time_mean, extinction_time_std, N_net)
+    plot_theory_well_mixed(lam_net, extinction_time_mean, extinction_time_std, N)
 
     # plot_theory_undirected_weak_hetro(lam, extinction_time_mean, extinction_time_std, N,eps_din_vec,eps_dout_vec)
 
@@ -115,13 +115,13 @@ def plot_weight(filename,directory_name):
 
 if __name__ == '__main__':
     # Plot graphs of the we simulations
-    directory_name ='/analysis/cluster/wellmixed/lam16_sims1000_jump5_net10/'
-    filename =['wellmixed_N100_lam16_tau1_it100_jump5_quant5_sims1000_net10_eps0','wellmixed_N150_lam16_tau1_it100_jump5_quant5_sims1000_net10_eps0','wellmixed_N200_lam16_tau1_it100_jump5_quant5_sims1000_net10_eps0','wellmixed_N250_lam16_tau1_it100_jump2_quant5_sims1000_net10_eps0']
+    directory_name ='/analysis/cluster/wellmixed/N350_sims_1000_and2000_jump2_and_5_net10/'
+    filename =['wellmixed_N350_lam125_tau1_it100_jump5_quant5_sims1000_net10_eps0','wellmixed_N350_lam13_tau1_it100_jump5_quant5_sims1000_net10_eps0','wellmixed_N350_lam135_tau1_it100_jump5_quant5_sims1000_net10_eps0','wellmixed_N350_lam14_tau1_it100_jump2_quant5_sims2000_net10_eps0','wellmixed_N350_lam145_tau1_it100_jump2_quant5_sims2000_net10_eps0','wellmixed_N350_lam15_tau1_it100_jump2_quant5_sims2000_net10_eps0']
     # filename =['bimodal_N300_lam15_tau1_it100_jump2_quant5_sims1000_net10_eps02_mfix']
     # filename =['bimodal_N300_lam15_tau1_it100_jump2_quant5_sims1000_net10_eps005_mfix','bimodal_N300_lam15_tau1_it100_jump2_quant5_sims1000_net10_eps01_mfix','bimodal_N300_lam15_tau1_it100_jump2_quant5_sims1000_net10_eps02_mfix']
+    filename = ['wellmixed_N350_lam14_tau1_it100_jump2_quant5_sims2000_net10_eps0']
 
-
-    relaxation_time  = 10
+    relaxation_time  = 15
     Alpha = 1.0
-    plot_MTE(filename,directory_name,relaxation_time)
-    # plot_weight(filename,directory_name)
+    # plot_MTE(filename,directory_name,relaxation_time)
+    plot_weight(filename,directory_name)

@@ -115,7 +115,7 @@ def resample(n, w, steps):
 
 
 
-def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau,infile,mf_solution):
+def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau,infile,mf_solution,new_trajcetory_bin):
     Num_inf = int(x*N) # Number of initially infected nodes
     # Parameters for the network to work
     # G = nx.complete_graph(N) # Creates a random graphs with k number of neighbors
@@ -147,7 +147,8 @@ def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau,infile,mf_solut
         n,  weights, death = GillespieMC(n, weights, tau, k, N, Alpha, Beta,G)
         Death = np.append(Death, death)
         # n_min_new = np.quantile(np.sum(n, axis=0), 0.05)
-        n_min_new = np.partition(np.sum(n, axis=0), 5)[5]
+        # n_min_new = np.partition(np.sum(n, axis=0), 5)[5]
+        n_min_new = np.partition(np.sum(n, axis=0), new_trajcetory_bin)[new_trajcetory_bin]
         if n_min_new < n_min - jump and Nlimits[-2]>jump:
             # n_min = np.min(np.sum(n,axis=0))
             n_min = n_min_new
@@ -205,6 +206,7 @@ def act_as_main():
     # G = nx.random_regular_graph(k,N) # Creates a random graphs with k number of neighbors
     network_num = 0
     tau = 1.0
+    new_trajcetory_bin = 5
     start_time = time.time()
     d1_in, d1_out, d2_in, d2_out = int(k * (1 - eps_din)), int(k * (1 - eps_dout)), int(k * (1 + eps_din)), int(
         k * (1 + eps_dout))
@@ -214,7 +216,7 @@ def act_as_main():
     y1star=(-2*eps_din*(1 + eps_dout*eps_din)+ lam*(-1 + eps_din)*(1 + (-1 + 2*eps_dout)*eps_din)+ np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(-1 +eps_dout)*(-1 +eps_din)*eps_din)
     y2star=(lam + eps_din*(-2 + 2*lam +lam*eps_din+ 2*eps_dout*(lam +(-1 + lam)*eps_din)) -np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(1 +eps_dout)*eps_din*(1 + eps_din))
     xstar = y1star +y2star
-    run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_num,tau,infile,xstar)
+    run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_num,tau,infile,xstar,new_trajcetory_bin)
 
 
 
@@ -223,4 +225,4 @@ if __name__ == '__main__':
     # Run the extinction program for bimodal directed networks
         run_sim(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]),
         float(sys.argv[6]), float(sys.argv[7]), int(sys.argv[8]),float(sys.argv[9]),float(sys.argv[10]),int(sys.argv[11]),
-                float(sys.argv[12]),sys.argv[13],float(sys.argv[14]))
+                float(sys.argv[12]),sys.argv[13],float(sys.argv[14]),int(sys.argv[15]))
