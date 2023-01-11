@@ -25,8 +25,8 @@ def job_to_cluster(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in
     np.save('parameters.npy',parameters)
     dir_path = os.path.dirname(os.path.realpath(__file__))
     for i in range(number_of_networks):
-        # G = rand_networks.random_bimodal_directed_graph(d1_in, d1_out, d2_in, d2_out, N)
-        G = nx.complete_graph(N)
+        G = rand_networks.random_bimodal_directed_graph(d1_in, d1_out, d2_in, d2_out, N)
+        # G = nx.complete_graph(N)
         infile = 'GNull_{}.pickle'.format(i)
         nx.write_gpickle(G, infile)
         os.system(dir_path + '/slurm.serjob python3 ' + dir_path + '/we_sis_network_extinction.py ' + str(prog) + ' ' +
@@ -36,12 +36,12 @@ def job_to_cluster(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in
 
 if __name__ == '__main__':
     # Parameters for the network to work
-    N = 100 # number of nodes
-    lam = 1.6 # The reproduction number
+    N = 350 # number of nodes
+    lam = 1.5 # The reproduction number
     number_of_networks = 10
     sims = 1000 # Number of simulations at each step
-    k = N # Average number of neighbors for each node
-    # k = 50 # Average number of neighbors for each node
+    # k = N # Average number of neighbors for each node
+    k = 50 # Average number of neighbors for each node
     x = 0.2 # intial infection percentage
     Num_inf = int(x*N) # Number of initially infected nodes
     it = 100
@@ -67,4 +67,3 @@ if __name__ == '__main__':
 
     # What's the job to run either on the cluster or on the laptop
     job_to_cluster(foldername, parameters, number_of_networks, d1_in, d1_out, d2_in, d2_out, N, Beta, tau, Istar,it)
-
