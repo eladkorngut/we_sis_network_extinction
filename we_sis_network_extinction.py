@@ -181,36 +181,14 @@ def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau,infile,mf_solut
     print('Theory and numeric ratio',TAU/theory_well_mixed_mte)
     print(Nlimits)
     print(Death)
-    # fig, ax = plt.subplots()
-    # ax.semilogy(np.arange(it), Death)
-    # plt.xlabel('it')
-    # plt.ylabel('Deaths')
-    # plt.title('N={}, jump={}, R0={},tau={}, Sim/theory={}'.format(N,jump,lam,np.round(tau,3),TAU/theory_well_mixed_mte))
-    # fig.savefig('Death_v_it.png',dpi=200)
-    # plt.show()
     np.save('tau_' + str(network_number) + '.npy',TAU)
     np.save('Deaths_' + str(network_number) + '.npy',Death)
     np.save('Nlimits_'+ str(network_number) + '.npy',Nlimits)
     np.save('weights_'+ str(network_number) + '.npy',weights)
     np.save('total_infected_for_sim_' + str(network_number) + '.npy', total_infected_for_sim)
 
-    # B = {}
-    # B['flux'] = Death
-    # B['weights'] = weights
-    # B['n'] = n
-    # B['tau'] = tau
-    # B['dn'] = dn
-    # B['N'] = N
-    # B['mu'] = mu
-    # B['TrajPerBin'] = sims
 
-
-    # dire = 'N_'+ np.str(N)  + '_dn_' + np.str(dn) + '_mu_'+ np.str(mu)
-    # savemat(dire,B)
-    # print("--- %s seconds ---" % (time.time() - start_time))
-
-
-if __name__ == '__main__':
+def act_as_main():
     N = 100 # number of nodes
     sims = 100 # Number of simulations at each step
     # k = 100 # Average number of neighbors for each node
@@ -237,3 +215,12 @@ if __name__ == '__main__':
     y2star=(lam + eps_din*(-2 + 2*lam +lam*eps_din+ 2*eps_dout*(lam +(-1 + lam)*eps_din)) -np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(1 +eps_dout)*eps_din*(1 + eps_din))
     xstar = y1star +y2star
     run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_num,tau,infile,xstar)
+
+
+
+if __name__ == '__main__':
+    if sys.argv[1] == 'bd':
+    # Run the extinction program for bimodal directed networks
+        run_sim(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), float(sys.argv[5]),
+        float(sys.argv[6]), int(sys.argv[7]), int(sys.argv[8]),float(sys.argv[9]),float(sys.argv[10]),int(sys.argv[11]),
+                float(sys.argv[12]),sys.argv[13],float(sys.argv[14]))
