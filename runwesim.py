@@ -31,7 +31,7 @@ def job_to_cluster(foldername,parameters,number_of_networks,d1_in, d1_out, d2_in
         nx.write_gpickle(G, infile)
         os.system(dir_path + '/slurm.serjob python3 ' + dir_path + '/we_sis_network_extinction.py ' + str(prog) + ' ' +
         str(N) + ' ' + str(sims) + ' ' + str(it) + ' ' + str(k) + ' ' + str(x) + ' ' + str(lam) + ' ' + str(jump) + ' ' + str(Alpha) + ' ' + str(Beta) +
-        + ' ' + str(i) + ' ' + str(tau)+ ' ' + str(infile)+ ' ' + str(Istar))
+        ' ' + str(i) + ' ' + str(tau)+ ' ' + str(infile)+ ' ' + str(Istar))
 
 
 if __name__ == '__main__':
