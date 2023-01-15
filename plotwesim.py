@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from scipy.stats import expon
+import scipy.io as sio
 
 def plot_detahs_v_it(number_of_networks,it):
     Deaths= [None]*number_of_networks
@@ -38,20 +39,51 @@ def plot_theory_well_mixed(lam_net,extinction_time_mean,extinction_time_std,N):
     plt.show()
 
 
-def plot_theory_undirected_weak_hetro(lam,extinction_time_mean,extinction_time_std,N,eps_din,eps_dout):
-    eps_theory = np.linspace(np.min(eps_din),np.max(eps_din),100)
-    s0 = np.log(lam)+1/lam-1
-    offset = s0
-    f_R0 = -((lam-1)*(1-12*lam+3*lam**2)+8*lam**2*np.log(lam))/(4*lam**3)
-    theory_mj_mte = N*offset - N*f_R0*eps_theory**2
+def plot_theory_undirected(lam,extinction_time_mean,extinction_time_std,N,eps_din,eps_dout):
+    # eps_theory = np.linspace(np.min(eps_din),np.max(eps_din),100)
+    # s0 = np.log(lam)+1/lam-1
+    offset = 0
+    # f_R0 = -((lam-1)*(1-12*lam+3*lam**2)+8*lam**2*np.log(lam))/(4*lam**3)
+    # theory_mj_mte = N*offset - N*f_R0*eps_theory**2
     fig_extinction, ax_extinction = plt.subplots()
-    # plt.errorbar(eps_din**2,np.log(extinction_time_mean),yerr=np.log(extinction_time_std)/np.log(extinction_time_mean),fmt='o')
-    plt.scatter(eps_din**2, np.log(extinction_time_mean))
-    plt.plot(eps_theory**2,theory_mj_mte)
-    plt.xlabel('\epsilon**2')
-    plt.ylabel('ln(T)')
-    plt.title('ln(T) vs \epsilon**2 N={}'.format(int(N)))
-    fig_extinction.savefig('extinction_v_epsilon.png',dpi=200)
+    mat_master_eq = sio.loadmat('bimodal_mte.mat')
+    tau_master = mat_master_eq['tau'][0]
+    epsilon_mu_master = mat_master_eq['epsilon_mu'][0]
+    ax_extinction.plot(epsilon_mu_master,np.log(tau_master),linewidth=2,label='Master',linestyle='-',color='b')
+    ax_extinction.errorbar(eps_din,np.log(extinction_time_mean),yerr=np.log(extinction_time_std)/np.log(extinction_time_mean),fmt='o',label='WE',color='r')
+    # plt.scatter(eps_din**2, np.log(extinction_time_mean))
+    # plt.plot(eps_theory**2,theory_mj_mte)
+
+    ax_extinction.set_xlabel(r'$\epsilon$')
+    ax_extinction.set_ylabel('ln(T)')
+    ax_extinction.set_title(r'Undirected Graph ln(T) vs $\epsilon$ N={} and R={}'.format(int(N),lam))
+    plt.legend()
+    fig_extinction.savefig('extinction_v_epsilon_undirected.png',dpi=200)
+    plt.show()
+
+def plot_theory_clancy(lam,extinction_time_mean,extinction_time_std,N,eps_din,eps_dout):
+    eps_theory = np.linspace(np.min(eps_din),np.max(eps_din),100)
+    fig_extinction, ax_extinction = plt.subplots()
+    epsilon_mu_theory = np.linspace(0.0, 0.99, 100)
+    epsilon_lam =0.0
+    offset = 0.14
+    mat_master_eq = sio.loadmat('bimodal_mte.mat')
+    tau_master = mat_master_eq['tau'][0]
+    epsilon_mu_master = mat_master_eq['epsilon_mu'][0]
+    zeta = lam / (2 * (1 + epsilon_lam * epsilon_mu_theory)) - 1/(1 - epsilon_mu_theory**2)
+    D = zeta + np.sqrt(zeta**2 + (lam - 1) / (1 - epsilon_mu_theory**2))
+    action_clancy = (1 / 2) * (np.log(1 + (1 - epsilon_mu_theory)* D) + np.log(1 + (1 + epsilon_mu_theory)* D)) - (
+                D/ lam)
+    ax_extinction.plot(epsilon_mu_master,np.log(tau_master)-offset,linewidth=2,label='Master',linestyle='--',color='k')
+    ax_extinction.errorbar(eps_din,np.log(extinction_time_mean),yerr=np.log(extinction_time_std)/np.log(extinction_time_mean),fmt='o',color='r',label='WE')
+
+    # plt.scatter(eps_din**2, np.log(extinction_time_mean))
+    ax_extinction.plot(epsilon_mu_theory,N*action_clancy,color='b',label='Theory')
+    ax_extinction.set_xlabel(r'$\epsilon$')
+    ax_extinction.set_ylabel('ln(T)')
+    plt.legend()
+    ax_extinction.set_title(r'Pratialy heterogenous ln(T) vs $\epsilon$ N={} and R={}'.format(int(N),lam))
+    fig_extinction.savefig('extinction_v_epsilon_clancy.png',dpi=200)
     plt.show()
 
 
@@ -67,7 +99,7 @@ def plot_MTE(filename,directory_name,relaxation_time):
         os.chdir(filename[f])
         N, sims, it, k, x, lam, jump, Num_inf, number_of_networks,tau,eps_din,eps_dout = np.load('parameters.npy')
 
-        eps_din_vec[f] =eps_din
+        eps_din_vec[f] = eps_din
         eps_dout_vec[f] =eps_dout
         extinction_time =  np.empty(int(number_of_networks))
         for i in range(int(number_of_networks)):
@@ -79,7 +111,9 @@ def plot_MTE(filename,directory_name,relaxation_time):
         # N_net[f] = N
     os.chdir(dir_path)
     # plot_theory_well_mixed(lam, extinction_time_mean, extinction_time_std, N_net)
-    plot_theory_well_mixed(lam_net, extinction_time_mean, extinction_time_std, N)
+    # plot_theory_well_mixed(lam_net, extinction_time_mean, extinction_time_std, N)
+    # plot_theory_clancy(lam, extinction_time_mean, extinction_time_std, N,eps_din_vec,eps_dout_vec)
+    plot_theory_undirected(lam, extinction_time_mean, extinction_time_std, N, eps_din_vec, eps_dout_vec)
 
     # plot_theory_undirected_weak_hetro(lam, extinction_time_mean, extinction_time_std, N,eps_din_vec,eps_dout_vec)
 
@@ -115,13 +149,17 @@ def plot_weight(filename,directory_name):
 
 if __name__ == '__main__':
     # Plot graphs of the we simulations
-    directory_name ='/analysis/cluster/wellmixed/N350_sims_1000_and2000_jump2_and_5_net10/'
-    filename =['wellmixed_N350_lam125_tau1_it100_jump5_quant5_sims1000_net10_eps0','wellmixed_N350_lam13_tau1_it100_jump5_quant5_sims1000_net10_eps0','wellmixed_N350_lam135_tau1_it100_jump5_quant5_sims1000_net10_eps0','wellmixed_N350_lam14_tau1_it100_jump2_quant5_sims2000_net10_eps0','wellmixed_N350_lam145_tau1_it100_jump2_quant5_sims2000_net10_eps0','wellmixed_N350_lam15_tau1_it100_jump2_quant5_sims2000_net10_eps0']
-    # filename =['bimodal_N300_lam15_tau1_it100_jump2_quant5_sims1000_net10_eps02_mfix']
-    # filename =['bimodal_N300_lam15_tau1_it100_jump2_quant5_sims1000_net10_eps005_mfix','bimodal_N300_lam15_tau1_it100_jump2_quant5_sims1000_net10_eps01_mfix','bimodal_N300_lam15_tau1_it100_jump2_quant5_sims1000_net10_eps02_mfix']
-    filename = ['wellmixed_N350_lam14_tau1_it100_jump2_quant5_sims2000_net10_eps0']
-
-    relaxation_time  = 15
+    # directory_name ='/analysis/clancy_case/diff_eps_mu/N400_lam14_diff_eps_clancy_case/'
+    directory_name ='/analysis/bimodal_undirected_network/N400_lam14_diff_eps_high_jumps/'
+    # filename =['bimodal_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin01_epsout0_k100','bimodal_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin02_epsout0_k100',
+    #            'bimodal_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin03_epsout0_k100','bimodal_N400_lam14_tau1_it100_jump2_quant5_sims2000_net10_epsin04_epsout0_k100',
+    #            'bimodal_N400_lam14_tau1_it100_jump2_quant5_sims2000_net10_epsin05_epsout0_k100','bimodal_N400_lam14_tau1_it100_jump2_quant5_sims2000_net10_epsin06_epsout0_k100',
+    #            'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin07_epsout0_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin084_epsout0_k100']
+    filename = ['bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin01_epsout01_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin02_epsout02_k100',
+                'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin03_epsout02_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin04_epsout04_k100',
+                'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin05_epsout05_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin06_epsout06_k100',
+                'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin07_epsout07_k100']
+    relaxation_time  = 20
     Alpha = 1.0
-    # plot_MTE(filename,directory_name,relaxation_time)
-    plot_weight(filename,directory_name)
+    plot_MTE(filename,directory_name,relaxation_time)
+    # plot_weight(filename,directory_name)
