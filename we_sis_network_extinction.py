@@ -28,7 +28,6 @@ from sympy.utilities.iterables import multiset_permutations
 import time
 import networkx as nx
 import random as rand
-import matplotlib.pyplot as plt
 import rand_networks
 
 
@@ -116,6 +115,7 @@ def resample(n, w, steps):
 
 
 def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau,infile,mf_solution,new_trajcetory_bin):
+    start_time = time.time()
     Num_inf = int(x*N) # Number of initially infected nodes
     # Parameters for the network to work
     # G = nx.complete_graph(N) # Creates a random graphs with k number of neighbors
@@ -173,13 +173,13 @@ def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau,infile,mf_solut
         print(j)
 
     TAU = tau/np.mean((Death[relaxation_time:]))  #.reshape(int((it-100)/10), 10), axis = 1).mean()
-    fe= ((lam-1)*(1-12*lam+3*lam**2)+8*lam**2*np.log(lam))/(4*lam**3)
     theory_well_mixed_mte = (1/Alpha)*np.sqrt(2*np.pi/N)*(lam/(lam-1)**2)*np.exp(N*(np.log(lam)+1/lam-1))
 
     print('Check if probability is conserved: Weights + Death = ' ,weights.sum() + Death.sum())
     print('Sick {}, Healthy {}'.format(weights.sum(), Death.sum()))
     print('the time of switch is ', TAU)
     print('Theory and numeric ratio',TAU/theory_well_mixed_mte)
+    print("--- %s seconds ---" % (time.time() - start_time))
     print(Nlimits)
     print(Death)
     np.save('tau_' + str(network_number) + '.npy',TAU)
@@ -190,37 +190,38 @@ def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau,infile,mf_solut
 
 
 def act_as_main():
-    N = 100 # number of nodes
+    N = 300 # number of nodes
     sims = 100 # Number of simulations at each step
     # k = 100 # Average number of neighbors for each node
-    k = 50 # Average number of neighbors for each node
+    k = 100 # Average number of neighbors for each node
 
     x = 0.2 # intial infection percentage
-    lam = 1.6 # The reproduction number
-    it = 100
+    lam = 1.3 # The reproduction number
+    it = 70
     jump = 10
     Alpha = 1.0 # Recovery rate
     Beta_avg = Alpha * lam / k # Infection rate for each node
-    eps_din,eps_dout = 0.0,0.0 # The normalized std (second moment divided by the first) of the network
+    eps_din,eps_dout = 0.1,0.0 # The normalized std (second moment divided by the first) of the network
     Beta = Beta_avg / (1 + eps_din*eps_dout) # This is so networks with different std will have the reproduction number
     # G = nx.random_regular_graph(k,N) # Creates a random graphs with k number of neighbors
     network_num = 0
     tau = 1.0
     new_trajcetory_bin = 5
-    start_time = time.time()
     d1_in, d1_out, d2_in, d2_out = int(k * (1 - eps_din)), int(k * (1 - eps_dout)), int(k * (1 + eps_din)), int(
         k * (1 + eps_dout))
     G = rand_networks.random_bimodal_directed_graph(d1_in, d1_out, d2_in, d2_out, N)
     infile = 'GNull_{}.pickle'.format(network_num)
     nx.write_gpickle(G, infile)
-    y1star=(-2*eps_din*(1 + eps_dout*eps_din)+ lam*(-1 + eps_din)*(1 + (-1 + 2*eps_dout)*eps_din)+ np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(-1 +eps_dout)*(-1 +eps_din)*eps_din)
-    y2star=(lam + eps_din*(-2 + 2*lam +lam*eps_din+ 2*eps_dout*(lam +(-1 + lam)*eps_din)) -np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(1 +eps_dout)*eps_din*(1 + eps_din))
-    xstar = y1star +y2star
-    run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_num,tau,infile,xstar,new_trajcetory_bin)
+    # y1star=(-2*eps_din*(1 + eps_dout*eps_din)+ lam*(-1 + eps_din)*(1 + (-1 + 2*eps_dout)*eps_din)+ np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(-1 +eps_dout)*(-1 +eps_din)*eps_din)
+    # y2star=(lam + eps_din*(-2 + 2*lam +lam*eps_din+ 2*eps_dout*(lam +(-1 + lam)*eps_din)) -np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(1 +eps_dout)*eps_din*(1 + eps_din))
+    # Istar = y1star +y2star
+    Istar = (1 - 1/lam) * N
+    run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_num,tau,infile,Istar,new_trajcetory_bin)
 
 
 
 if __name__ == '__main__':
+    # act_as_main()
     if sys.argv[1] == 'bd':
     # Run the extinction program for bimodal directed networks
         run_sim(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]),

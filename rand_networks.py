@@ -468,16 +468,16 @@ def _to_stublist_simple_graph(degree_sequence):
     Examples
     --------
 
-    >>> degree_sequence = [1, 2, 3]
-    >>> _to_stublist(degree_sequence)
+    # >>> degree_sequence = [1, 2, 3]
+    # >>> _to_stublist(degree_sequence)
     [0, 1, 1, 2, 2, 2]
 
     If a zero appears in the sequence, that means the node exists but
     has degree zero, so that number will be skipped in the returned
     list::
 
-    >>> degree_sequence = [2, 0, 1]
-    >>> _to_stublist(degree_sequence)
+    # >>> degree_sequence = [2, 0, 1]
+    # >>> _to_stublist(degree_sequence)
     [0, 0, 2]
 
     """
@@ -679,7 +679,7 @@ def jason_graph(file_name):
 
 
 if __name__ == '__main__':
-    N,k=2000,50
+    N,k=400,100
     interaction_strength = 100.5
     # d1_in, d1_out, d2_in, d2_out = 45,45,55,55
     # beta_inf,beta_sus = 0.1,0.1
@@ -708,7 +708,7 @@ if __name__ == '__main__':
     # export_adj_network_cpp(G,'Gnull.csv')
     # print('This no love song')
 
-    fig=plt.figure()
+    # fig=plt.figure()
     # G = rand_weighted_networks.bulid_weighted_network(N, k, 0.0, 0.0, interaction_strength)
     # G = netinithomo.set_graph_attriubute_DiGraph(G)
     # degree_in = [G.in_degree(n,'weight') for n in G.nodes()]
@@ -721,16 +721,16 @@ if __name__ == '__main__':
     # fig.savefig('hist.png', dpi=400)
     # plt.show()
 
-    eta=np.linspace(0.1,2.5,5)
-    std_in,std_out=[],[]
-    for i in eta:
-        G = rand_weighted_networks.bulid_weighted_network(N, k, 0.0, 0.0, i)
-        G = netinithomo.set_graph_attriubute_DiGraph(G)
-        degree_in = [G.in_degree(n, 'weight') for n in G.nodes()]
-        degree_out = [G.out_degree(n, 'weight') for n in G.nodes()]
-        std_in.append(np.std(degree_in))
-    plt.plot(eta,std_in)
-    plt.show()
+    # eta=np.linspace(0.1,2.5,5)
+    # std_in,std_out=[],[]
+    # for i in eta:
+    #     G = rand_weighted_networks.bulid_weighted_network(N, k, 0.0, 0.0, i)
+    #     G = netinithomo.set_graph_attriubute_DiGraph(G)
+    #     degree_in = [G.in_degree(n, 'weight') for n in G.nodes()]
+    #     degree_out = [G.out_degree(n, 'weight') for n in G.nodes()]
+    #     std_in.append(np.std(degree_in))
+    # plt.plot(eta,std_in)
+    # plt.show()
     # G=random_bimodal_directed_graph(20, 50, 80, 50, 100, seed=None)
     # draw_basic_nx_g(G)
     # np.histogram(create_random_degree_sequence('gauss', 0.1, 108.5, 600),100)
@@ -746,17 +746,18 @@ if __name__ == '__main__':
     # degree=create_random_degree_sequence('gauss', 0.1, 108.5, 600)
     # temp=nx.utils.discrete_sequence(1000,degree)
     # v_in,v_out=[],[]
-    # # eps_in,eps_out=[0.1,0.1,0.1,0.1,0.1,0.1],[0.05,0.1,0.15,0.2,0.25,0.3]
-    # eps_in,eps_out=[0.0],[0.0]
-    # for ein,eout in zip(eps_in,eps_out):
-    #     G=configuration_model_directed_graph('gauss_c', ein, eout, 200, 1000)
-    #     degree_in=[G.in_degree(n) for n in G.nodes()]
-    #     degree_out=[G.out_degree(n) for n in G.nodes()]
-    #     # v_in.append(np.std(degree_in)/np.mean(degree_in))
-    #     # v_out.append(np.std(degree_out)/np.mean(degree_out))
-    #     plt.hist((degree_in,degree_out),bins=500)
-    #     # plt.hist((degree_out),bins=400)
-    #     plt.show()
+    # eps_in,eps_out=[0.1,0.1,0.1,0.1,0.1,0.1],[0.05,0.1,0.15,0.2,0.25,0.3]
+    eps_in,eps_out=[0.5],[0.0]
+    for ein,eout in zip(eps_in,eps_out):
+        G=configuration_model_directed_graph('gauss_c', ein, eout, 50, 400)
+        degree_in=[G.in_degree(n) for n in G.nodes()]
+        degree_out=[G.out_degree(n) for n in G.nodes()]
+        # v_in.append(np.std(degree_in)/np.mean(degree_in))
+        # v_out.append(np.std(degree_out)/np.mean(degree_out))
+        # plt.hist((degree_in,degree_out),bins=500)
+        plt.hist(degree_in, bins=100)
+        # plt.hist((degree_out),bins=400)
+        plt.show()
     # print(*v_in, sep = ", ")
     # print(*v_out, sep = ", ")
     # degrees_in = [G.in_degree(n) for n in G.nodes()]
