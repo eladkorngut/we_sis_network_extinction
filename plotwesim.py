@@ -62,7 +62,7 @@ def plot_theory_undirected(lam,extinction_time_mean,extinction_time_std,N,eps_di
     plt.show()
 
 def plot_theory_clancy(lam,extinction_time_mean,extinction_time_std,N,eps_din,eps_dout):
-    eps_theory = np.linspace(np.min(eps_din),np.max(eps_din),100)
+    # eps_theory = np.linspace(np.min(eps_din),np.max(eps_din),100)
     fig_extinction, ax_extinction = plt.subplots()
     epsilon_mu_theory = np.linspace(0.0, 0.99, 100)
     epsilon_lam =0.0
@@ -82,7 +82,7 @@ def plot_theory_clancy(lam,extinction_time_mean,extinction_time_std,N,eps_din,ep
     ax_extinction.set_xlabel(r'$\epsilon$')
     ax_extinction.set_ylabel('ln(T)')
     plt.legend()
-    ax_extinction.set_title(r'Pratialy heterogenous ln(T) vs $\epsilon$ N={} and R={}'.format(int(N),lam))
+    ax_extinction.set_title(r'Pratialy heterogenous (Gaussian) ln(T) vs $\epsilon$ N={} and R={}'.format(int(N),lam))
     fig_extinction.savefig('extinction_v_epsilon_clancy.png',dpi=200)
     plt.show()
 
@@ -97,23 +97,30 @@ def plot_MTE(filename,directory_name,relaxation_time):
     for f in range(len(filename)):
         os.chdir(dir_path+directory_name)
         os.chdir(filename[f])
-        N, sims, it, k, x, lam, jump, Num_inf, number_of_networks,tau,eps_din,eps_dout = np.load('parameters.npy')
-
-        eps_din_vec[f] = eps_din
-        eps_dout_vec[f] =eps_dout
-        extinction_time =  np.empty(int(number_of_networks))
+        # N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg = np.load('parameters.npy')
+        N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg = np.load('parameters_0.npy')
+        # eps_din_vec[f] = eps_din
+        # eps_dout_vec[f] =eps_dout
+        extinction_time,eps_in_current,eps_out_current =  np.empty(int(number_of_networks)),np.empty(int(number_of_networks)),np.empty(int(number_of_networks))
         for i in range(int(number_of_networks)):
             Death = np.load('Deaths_{}.npy'.format(i))
+            N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg = np.load('parameters_{}.npy'.format(i))
+            tau = float(tau)
+            eps_in_current[i] = float(eps_din)
+            eps_out_current[i] = float(eps_dout)
             extinction_time[i] = tau/np.mean((Death[relaxation_time:]))
         extinction_time_mean[f] = np.mean(extinction_time)
         extinction_time_std[f] =  np.std(extinction_time)
+        eps_din_vec[f] = np.mean(eps_in_current)
+        eps_dout_vec[f] = np.mean(eps_out_current)
+
         lam_net[f] = lam
         # N_net[f] = N
     os.chdir(dir_path)
     # plot_theory_well_mixed(lam, extinction_time_mean, extinction_time_std, N_net)
     # plot_theory_well_mixed(lam_net, extinction_time_mean, extinction_time_std, N)
-    # plot_theory_clancy(lam, extinction_time_mean, extinction_time_std, N,eps_din_vec,eps_dout_vec)
-    plot_theory_undirected(lam, extinction_time_mean, extinction_time_std, N, eps_din_vec, eps_dout_vec)
+    plot_theory_clancy(float(lam), extinction_time_mean, extinction_time_std, int(N),eps_din_vec,eps_dout_vec)
+    # plot_theory_undirected(lam, extinction_time_mean, extinction_time_std, N, eps_din_vec, eps_dout_vec)
 
     # plot_theory_undirected_weak_hetro(lam, extinction_time_mean, extinction_time_std, N,eps_din_vec,eps_dout_vec)
 
@@ -150,15 +157,20 @@ def plot_weight(filename,directory_name):
 if __name__ == '__main__':
     # Plot graphs of the we simulations
     # directory_name ='/analysis/clancy_case/diff_eps_mu/N400_lam14_diff_eps_clancy_case/'
-    directory_name ='/analysis/bimodal_undirected_network/N400_lam14_diff_eps_high_jumps/'
+    # directory_name ='/analysis/bimodal_undirected_network/N400_lam14_diff_eps_high_jumps/'
+    directory_name ='/analysis/gauss/diff_eps/clancy_case/N400_lam14/'
     # filename =['bimodal_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin01_epsout0_k100','bimodal_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin02_epsout0_k100',
     #            'bimodal_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin03_epsout0_k100','bimodal_N400_lam14_tau1_it100_jump2_quant5_sims2000_net10_epsin04_epsout0_k100',
     #            'bimodal_N400_lam14_tau1_it100_jump2_quant5_sims2000_net10_epsin05_epsout0_k100','bimodal_N400_lam14_tau1_it100_jump2_quant5_sims2000_net10_epsin06_epsout0_k100',
     #            'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin07_epsout0_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin084_epsout0_k100']
-    filename = ['bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin01_epsout01_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin02_epsout02_k100',
-                'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin03_epsout02_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin04_epsout04_k100',
-                'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin05_epsout05_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin06_epsout06_k100',
-                'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin07_epsout07_k100']
+    # filename = ['bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin01_epsout01_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin02_epsout02_k100',
+    #             'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin03_epsout02_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin04_epsout04_k100',
+    #             'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin05_epsout05_k100','bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin06_epsout06_k100',
+    #             'bimodal_N400_lam14_tau1_it100_jump10_quant5_sims2000_net10_epsin07_epsout07_k100']
+    filename = ['gauss_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin01_epsout0','gauss_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin02_epsout0','gauss_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin03_epsout0',
+                'gauss_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin04_epsout0','gauss_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin05_epsout0','gauss_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin06_epsout0',
+                'gauss_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin07_epsout0','gauss_N400_lam14_tau1_it100_jump5_quant5_sims2000_net10_epsin084_epsout0']
+
     relaxation_time  = 20
     Alpha = 1.0
     plot_MTE(filename,directory_name,relaxation_time)
