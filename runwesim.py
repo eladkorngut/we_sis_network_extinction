@@ -46,7 +46,7 @@ def job_to_cluster(foldername,parameters,Istar):
         # G = nx.complete_graph(N)
         d1_in, d1_out, d2_in, d2_out = int(int(k) * (1 - float(eps_din))), int(int(k) * (1 - float(eps_dout))), int(int(k) * (1 + float(eps_din))), int(
             int(k) * (1 + float(eps_dout)))
-        Beta = Beta_avg / (1 + eps_din * eps_dout)  # This is so networks with different std will have the reproduction number
+        Beta = Beta_avg / (1 + float(eps_din) * float(eps_dout))  # This is so networks with different std will have the reproduction number
     dir_path = os.path.dirname(os.path.realpath(__file__))
     for i in range(int(number_of_networks)):
         if prog=='bd':
