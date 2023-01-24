@@ -136,11 +136,12 @@ def run_sim(N,sims,it,k,x,lam,jump,Alpha,Beta,network_number,tau,infile,mf_solut
 
     Death = np.array([])
     # Nlimits = np.array([N+1, N*(1-1/lam),0])
-    Nlimits = np.array([N+1, mf_solution,0])
+    n_min = mf_solution
+    Nlimits = np.array([N+1, n_min,0])
 
     # n_min = n.min(0)
     # n_min = np.min(np.sum(n,axis=0))
-    n_min = N*(1-1/lam)
+    # n_min = N*(1-1/lam)
     # Nlimits = np.insert(Nlimits, -1, n_min, axis = 0)
 
     for j in range(it):
