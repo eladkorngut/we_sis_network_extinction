@@ -3,6 +3,9 @@ import os
 import we_sis_network_extinction
 import rand_networks
 import networkx as nx
+from scipy.optimize import fsolve
+from scipy.stats import skew
+
 
 def act_as_main(foldername,parameters,Istar):
     # This program will run the we_sis_network_extinction.py on the laptop\desktop
@@ -10,6 +13,7 @@ def act_as_main(foldername,parameters,Istar):
     # dir_path = os.path.dirname(os.path.realpath(__file__))
     os.chdir(foldername)
     N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg = parameters
+    N=int(N)
     if prog == 'bd':
         np.save('parameters.npy',parameters)
         # G = nx.complete_graph(N)
@@ -22,13 +26,20 @@ def act_as_main(foldername,parameters,Istar):
             G = rand_networks.random_bimodal_directed_graph(int(d1_in), int(d1_out), int(d2_in), int(d2_out), int(N))
         else:
             G = rand_networks.configuration_model_directed_graph(prog, float(eps_din), float(eps_dout), int(k), int(N))
-            k_avg_graph = np.mean([G.in_degree(n) for n in G.nodes()])
+            din = np.array([G.in_degree(i) for i in range(N)])
+            dout = np.array([G.out_degree(i) for i in range(N)])
+            k_avg_graph = np.mean(din)
             Beta_graph = float(lam)/k_avg_graph
-            eps_in_graph = np.std([G.in_degree(n) for n in G.nodes()])/k_avg_graph
-            eps_out_graph = np.std([G.out_degree(n) for n in G.nodes()])/k_avg_graph
+            eps_in_graph = np.std(din)/k_avg_graph
+            eps_out_graph = np.std(dout)/k_avg_graph
+            skewness_in = skew(din)
+            skewness_out = skew(dout)
             Beta = Beta_graph / (1 + np.sign(float(eps_din))*eps_in_graph * np.sign(float(eps_dout))* eps_out_graph)
+            dbig = fsolve(lambda dbig: (Beta/N)*np.dot(din/(k_avg_graph*np.ones(N)+dbig*din),dout)-1,0.0)[0]
+            ystari = (din*dbig)/(N*(k_avg_graph*np.ones(N)+din*dbig))
+            Istar = N*np.sum(ystari)
             parameters = np.array([N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_in_graph,
-                                   eps_out_graph, new_trajcetory_bin,prog, Beta])
+                                   eps_out_graph, new_trajcetory_bin,prog, Beta,skewness_in,skewness_out])
             np.save('parameters_{}.npy'.format(i), parameters)
         infile = 'GNull_{}.pickle'.format(i)
         nx.write_gpickle(G, infile)
@@ -41,6 +52,7 @@ def job_to_cluster(foldername,parameters,Istar):
     os.mkdir(foldername)
     os.chdir(foldername)
     N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg = parameters
+    N=int(N)
     if prog == 'bd':
         np.save('parameters.npy',parameters)
         # G = nx.complete_graph(N)
@@ -53,13 +65,21 @@ def job_to_cluster(foldername,parameters,Istar):
             G = rand_networks.random_bimodal_directed_graph(int(d1_in), int(d1_out), int(d2_in), int(d2_out), int(N))
         else:
             G = rand_networks.configuration_model_directed_graph(prog, float(eps_din), float(eps_dout), int(k), int(N))
+            din = np.array([G.in_degree(i) for i in range(N)])
+            dout = np.array([G.out_degree(i) for i in range(N)])
             k_avg_graph = np.mean([G.in_degree(n) for n in G.nodes()])
             Beta_graph = float(lam)/k_avg_graph
             eps_in_graph = np.std([G.in_degree(n) for n in G.nodes()])/k_avg_graph
             eps_out_graph = np.std([G.out_degree(n) for n in G.nodes()])/k_avg_graph
             Beta = Beta_graph / (1 + np.sign(float(eps_din))*eps_in_graph * np.sign(float(eps_dout))* eps_out_graph)
+            skewness_in = skew(din)
+            skewness_out = skew(dout)
+            Beta = Beta_graph / (1 + np.sign(float(eps_din))*eps_in_graph * np.sign(float(eps_dout))* eps_out_graph)
+            dbig = fsolve(lambda dbig: (Beta/N)*np.dot(din/(k_avg_graph*np.ones(N)+dbig*din),dout)-1,0.0)[0]
+            ystari = (din*dbig)/(N*(k_avg_graph*np.ones(N)+din*dbig))
+            Istar = N*np.sum(ystari)
             parameters = np.array([N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_in_graph,
-                                   eps_out_graph, new_trajcetory_bin,prog, Beta])
+                                   eps_out_graph, new_trajcetory_bin,prog, Beta,skewness_in,skewness_out])
             np.save('parameters_{}.npy'.format(i), parameters)
         infile = 'GNull_{}.pickle'.format(i)
         nx.write_gpickle(G, infile)
@@ -73,30 +93,30 @@ if __name__ == '__main__':
     N = 1000 # number of nodes
     lam = 1.22 # The reproduction number
     number_of_networks = 10
-    sims = 500 # Number of simulations at each step
+    sims = 2000 # Number of simulations at each step
     # k = N # Average number of neighbors for each node
-    k = 200 # Average number of neighbors for each node
+    k = 40 # Average number of neighbors for each node
     x = 0.2 # intial infection percentage
     Num_inf = int(x*N) # Number of initially infected nodes
     it = 100
     jump = 10
     Alpha = 1.0 # Recovery rate
     Beta_avg = Alpha * lam / k # Infection rate for each node
-    eps_din,eps_dout = 0.94,0.0 # The normalized std (second moment divided by the first) of the network
+    eps_din,eps_dout = 0.1,0.0 # The normalized std (second moment divided by the first) of the network
     # G = nx.random_regular_graph(k,N) # Creates a random graphs with k number of neighbors
     relaxation_time  = 10
     # tau = 1/(Num_inf*Alpha+N*Beta*k)
     tau = 1.0
     new_trajcetory_bin = 5
-    prog = 'bd'
+    prog = 'lognorm'
 
     parameters = np.array([N,sims,it,k,x,lam,jump,Num_inf,number_of_networks,tau,eps_din,eps_dout,new_trajcetory_bin,prog,Beta_avg])
     graphname  = 'GNull'
-    foldername = 'bimodal_N1000_k200_lam122_tau1_it100_jump10_quant5_sims500_net10_epsin094_epsout0'
-    y1star=(-2*eps_din*(1 + eps_dout*eps_din)+ lam*(-1 + eps_din)*(1 + (-1 + 2*eps_dout)*eps_din)+ np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(-1 +eps_dout)*(-1 +eps_din)*eps_din)
-    y2star=(lam + eps_din*(-2 + 2*lam +lam*eps_din+ 2*eps_dout*(lam +(-1 + lam)*eps_din)) -np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(1 +eps_dout)*eps_din*(1 + eps_din))
-    Istar = (y1star +y2star)*N
-    # Istar = (1 - 1/lam) * N
+    foldername = 'lognorm_N1000_k50_lam122_tau1_it100_jump10_quant5_sims2000_net10_epsin01_epsout0'
+    # y1star=(-2*eps_din*(1 + eps_dout*eps_din)+ lam*(-1 + eps_din)*(1 + (-1 + 2*eps_dout)*eps_din)+ np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(-1 +eps_dout)*(-1 +eps_din)*eps_din)
+    # y2star=(lam + eps_din*(-2 + 2*lam +lam*eps_din+ 2*eps_dout*(lam +(-1 + lam)*eps_din)) -np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(1 +eps_dout)*eps_din*(1 + eps_din))
+    # Istar = (y1star +y2star)*N
+    Istar = (1 - 1/lam) * N
 
 
     # What's the job to run either on the cluster or on the laptop

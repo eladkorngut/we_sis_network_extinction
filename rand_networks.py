@@ -13,6 +13,9 @@ from itertools import chain
 from scipy.stats import norm
 from scipy.stats import gamma
 from scipy.stats import uniform
+from scipy.stats import lognorm
+from scipy.stats import skew
+
 
 import json
 
@@ -379,8 +382,12 @@ def create_deg_distubtion_conf_model(epsilon,avg_degree,N,dist_type):
                         avg_degree * (1 + 100 * epsilon)).astype(int)
             possible_degrees = np.arange(low, high)
             deg_dist = (uniform.pdf(possible_degrees, loc=int(avg_degree*(1-epsilon)),scale=2*np.sqrt(3)*epsilon*avg_degree)*normalization).astype(int)
+        elif dist_type=='lognorm':
+            low,high =(avg_degree * (1 - 100 * epsilon)).astype(int), (
+                        avg_degree * (1 + 100 * epsilon)).astype(int)
+            possible_degrees = np.arange(low, high)
+            deg_dist = (lognorm.pdf(possible_degrees, np.sqrt(np.log(1+epsilon**2)) ,loc=0,scale=avg_degree/np.sqrt(1+epsilon**2))*normalization).astype(int)
         return list(chaini([n] * d for n, d in zip(possible_degrees, deg_dist))),deg_dist,possible_degrees
-
     def trim_edges_to_fit_N_nodes(deg_for_algo,deg_dist,possible_degrees,N):
         deg_dist, possible_degrees = deg_dist[deg_dist != 0], possible_degrees[deg_dist != 0]
         reduce_by_one =  np.random.uniform(0, np.size(deg_dist)-1, np.size(deg_for_algo) - N).astype(int)
@@ -411,7 +418,7 @@ def create_random_degree_sequence(name,epsilon,avg_degree,N):
         return np.random.gamma(1/epsilon**2,avg_degree*epsilon**2,N)
     elif name=='gauss_e':
         return create_exact_gauss_dis(epsilon,avg_degree,N)
-    elif name=='gauss_c' or name=='bimodal_c' or name=='gamma_c' or name=='uniform_c':
+    elif name=='gauss_c' or name=='bimodal_c' or name=='gamma_c' or name=='uniform_c' or name=='lognorm':
         return create_deg_distubtion_conf_model(epsilon,avg_degree,N,name)
 
 
@@ -747,17 +754,23 @@ if __name__ == '__main__':
     # temp=nx.utils.discrete_sequence(1000,degree)
     # v_in,v_out=[],[]
     # eps_in,eps_out=[0.1,0.1,0.1,0.1,0.1,0.1],[0.05,0.1,0.15,0.2,0.25,0.3]
-    eps_in,eps_out=[0.5],[0.0]
+    eps_in,eps_out=[0.01],[0.0]
     for ein,eout in zip(eps_in,eps_out):
-        G=configuration_model_directed_graph('gauss_c', ein, eout, 50, 400)
+        G=configuration_model_directed_graph('lognorm', ein, eout, 40, 1000)
         degree_in=[G.in_degree(n) for n in G.nodes()]
         degree_out=[G.out_degree(n) for n in G.nodes()]
         # v_in.append(np.std(degree_in)/np.mean(degree_in))
         # v_out.append(np.std(degree_out)/np.mean(degree_out))
-        # plt.hist((degree_in,degree_out),bins=500)
-        plt.hist(degree_in, bins=100)
+        # plt.hist((degree_in,degree_out),bins=100)
+        plt.hist(degree_in, bins=100,density=True,label='Skewness='+ str(round(skew(degree_in),4))+' $\epsilon$= '
+            +str(round(np.std(degree_in)/np.mean(degree_in),4))+' $k_{0}$= ' + str(round(np.mean(degree_in),4)))
         # plt.hist((degree_out),bins=400)
-        plt.show()
+    plt.xlabel('Degree')
+    plt.ylabel('Pdf')
+    plt.legend()
+    plt.title('Log-normal distribution')
+    plt.savefig('log_normal_'+str(eps_in[0]).replace('.','')+'.png',dpi=500)
+    plt.show()
     # print(*v_in, sep = ", ")
     # print(*v_out, sep = ", ")
     # degrees_in = [G.in_degree(n) for n in G.nodes()]

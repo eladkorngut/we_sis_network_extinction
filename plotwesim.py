@@ -12,7 +12,7 @@ def plot_detahs_v_it(filename,directory_name):
     for f in range(len(filename)):
         os.chdir(dir_path+directory_name)
         os.chdir(filename[f])
-        N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg = np.load('parameters.npy')
+        N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg,skewness_in,skewness_out = np.load('parameters.npy')
         Deaths = np.load('Deaths_{}.npy'.format(net_number))
     # ax_death.semilogy(np.arange(it), Deaths)
     ax_death.semilogy(Deaths)
@@ -104,7 +104,7 @@ def plot_MTE(filename,directory_name,relaxation_time):
     for f in range(len(filename)):
         os.chdir(dir_path+directory_name)
         os.chdir(filename[f])
-        N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg = np.load('parameters.npy')
+        N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg,skewness_in,skewness_out = np.load('parameters.npy')
         # N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg = np.load('parameters_0.npy')
         eps_din_vec[f] = eps_din
         eps_dout_vec[f] =eps_dout
@@ -112,7 +112,7 @@ def plot_MTE(filename,directory_name,relaxation_time):
         for i in range(int(number_of_networks)):
             Death = np.load('Deaths_{}.npy'.format(i))
             # N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg = np.load('parameters_{}.npy'.format(i))
-            N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg = np.load('parameters.npy')
+            N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_din, eps_dout,new_trajcetory_bin,prog,Beta_avg,skewness_in,skewness_out = np.load('parameters.npy')
             tau = float(tau)
             # eps_in_current[i] = float(eps_din)
             # eps_out_current[i] = float(eps_dout)
