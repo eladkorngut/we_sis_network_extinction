@@ -39,8 +39,10 @@ def act_as_main(foldername,parameters,Istar):
             ystari = (din*dbig)/(N*(k_avg_graph*np.ones(N)+din*dbig))
             Istar = N*np.sum(ystari)
             parameters = np.array([N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_in_graph,
-                                   eps_out_graph, new_trajcetory_bin,prog, Beta,skewness_in,skewness_out])
+                                   eps_out_graph, new_trajcetory_bin,prog, Beta,skewness_in,skewness_out,k_avg_graph,dbig,Istar])
             np.save('parameters_{}.npy'.format(i), parameters)
+            np.save('din_{}.npy'.format(i),din)
+            np.save('dout_{}.npy'.format(i),dout)
         infile = 'GNull_{}.pickle'.format(i)
         nx.write_gpickle(G, infile)
         we_sis_network_extinction.run_sim(int(N),int(sims),int(it),int(k),float(x),float(lam),int(jump),float(Alpha),
@@ -112,7 +114,7 @@ if __name__ == '__main__':
 
     parameters = np.array([N,sims,it,k,x,lam,jump,Num_inf,number_of_networks,tau,eps_din,eps_dout,new_trajcetory_bin,prog,Beta_avg])
     graphname  = 'GNull'
-    foldername = 'lognorm_N1000_k50_lam122_tau1_it100_jump10_quant5_sims2000_net10_epsin01_epsout0'
+    foldername = 'lognorm_N1000_k40_lam122_tau1_it100_jump10_quant5_sims2000_net10_epsin01_epsout0'
     # y1star=(-2*eps_din*(1 + eps_dout*eps_din)+ lam*(-1 + eps_din)*(1 + (-1 + 2*eps_dout)*eps_din)+ np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(-1 +eps_dout)*(-1 +eps_din)*eps_din)
     # y2star=(lam + eps_din*(-2 + 2*lam +lam*eps_din+ 2*eps_dout*(lam +(-1 + lam)*eps_din)) -np.sqrt(lam**2 +eps_din*(4*eps_din +lam**2*eps_din*(-2 +eps_din**2) +4*eps_dout*(lam -(-2 + lam)*eps_din**2) +4*eps_dout**2*eps_din*(lam -(-1 + lam)*eps_din**2))))/(4*lam*(1 +eps_dout)*eps_din*(1 + eps_din))
     # Istar = (y1star +y2star)*N
