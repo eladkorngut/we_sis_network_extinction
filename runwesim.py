@@ -73,7 +73,7 @@ def job_to_cluster(foldername,parameters,Istar):
             Beta_graph = float(lam)/k_avg_graph
             eps_in_graph = np.std([G.in_degree(n) for n in G.nodes()])/k_avg_graph
             eps_out_graph = np.std([G.out_degree(n) for n in G.nodes()])/k_avg_graph
-            Beta = Beta_graph / (1 + np.sign(float(eps_din))*eps_in_graph * np.sign(float(eps_dout))* eps_out_graph)
+            # Beta = Beta_graph / (1 + np.sign(float(eps_din))*eps_in_graph * np.sign(float(eps_dout))* eps_out_graph)
             skewness_in = skew(din)
             skewness_out = skew(dout)
             Beta = Beta_graph / (1 + np.sign(float(eps_din))*eps_in_graph * np.sign(float(eps_dout))* eps_out_graph)
@@ -81,8 +81,10 @@ def job_to_cluster(foldername,parameters,Istar):
             ystari = (din*dbig)/(N*(k_avg_graph*np.ones(N)+din*dbig))
             Istar = N*np.sum(ystari)
             parameters = np.array([N, sims, it, k, x, lam, jump, Num_inf, number_of_networks, tau, eps_in_graph,
-                                   eps_out_graph, new_trajcetory_bin,prog, Beta,skewness_in,skewness_out])
+                                   eps_out_graph, new_trajcetory_bin,prog, Beta,skewness_in,skewness_out,k_avg_graph,dbig,Istar])
             np.save('parameters_{}.npy'.format(i), parameters)
+            np.save('din_{}.npy'.format(i),din)
+            np.save('dout_{}.npy'.format(i),dout)
         infile = 'GNull_{}.pickle'.format(i)
         nx.write_gpickle(G, infile)
         os.system(dir_path + '/slurm.serjob python3 ' + dir_path + '/we_sis_network_extinction.py ' + str(prog) + ' ' +

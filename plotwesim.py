@@ -157,7 +157,7 @@ def plot_MTE(filename,directory_name,relaxation_time):
         extinction_time,eps_in_current,eps_out_current,dbig_net,action_theory =  np.empty(int(number_of_networks)),np.empty(int(number_of_networks)),np.empty(int(number_of_networks)),np.empty(int(number_of_networks)),np.empty(int(number_of_networks))
         for i in range(int(number_of_networks)):
             Death = np.load('Deaths_{}.npy'.format(i))
-            G = nx.read_gpickle('GNull_{}.pickle'.format(i))
+            # G = nx.read_gpickle('GNull_{}.pickle'.format(i))
             din= np.array([G.in_degree(i) for i in range(N)])
             dout = np.array([G.out_degree(i) for i in range(N)])
             k_avg_graph = np.mean([G.in_degree(n) for n in G.nodes()])
